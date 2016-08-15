@@ -11,7 +11,7 @@ classdef act
     end
     
     methods
-        function obj = bfit
+        function obj = act
             %generate fake behavioural data
             obj.data.stim = randn(100,1);
             obj.data.stim = [ones(10,1)*-3; ones(10,1)*3];

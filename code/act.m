@@ -14,13 +14,13 @@ classdef act
         function obj = act
             %generate fake behavioural data
             obj.data.stim = randn(100,1);
-            obj.data.stim = [ones(10,1)*-3; ones(10,1)*3];
+%             obj.data.stim = [ones(10,1)*-3; ones(10,1)*3];
 
             obj.data.resp = binornd(1,1./(1+exp(-(0 + 1*obj.data.stim))));
             plot(obj.data.stim,obj.data.resp,'o');
             
-            obj.w0 = obj.w_range(1):obj.dw:obj.w_range(2);
-            obj.w1 = obj.w_range(1):obj.dw:obj.w_range(2);
+            obj.w0 = obj.w_range(1) : obj.dw : obj.w_range(2);
+            obj.w1 = obj.w_range(1) : obj.dw : obj.w_range(2);
         end
        
         function l = likelihood(obj,data)
@@ -78,11 +78,11 @@ classdef act
             
                         
             [~,i]=max(dist(:)); %index of maximum value of distribution
-            [a,b]=ind2sub([numel(obj.w0) numel(obj.w1)],i);
+            [row,col]=ind2sub([numel(obj.w0) numel(obj.w1)],i);
             
             imagesc(obj.w0,obj.w1,dist); set(gca,'ydir','normal'); 
             xlabel('W1'); ylabel('W0');
-            title([which ' w0_{max}=' num2str(obj.w0(a)) ' w1_{max}=' num2str(obj.w1(b)) ]);
+            title([which ' w0_{max}=' num2str(obj.w0(row)) ' w1_{max}=' num2str(obj.w1(col)) ]);
         end
         
         function run(obj)
@@ -111,7 +111,7 @@ classdef act
             
             py=[];
             for xn = 1:length(newX)
-                phat = obj.dw * obj.dw * posterior * 1./(1+exp(-(W0' + W1'*newX(xn))));
+                phat = obj.dw * obj.dw * posterior./(1+exp(-(W0' + W1'*newX(xn))));
                 py(xn) = sum(phat(:));
             end            
         end
@@ -140,8 +140,8 @@ classdef act
                     end
                     py = [py; p];
                     
-                    ent = new_post.*log(new_post)*obj.dw^2;
-                    ch = [ch; -nansum(ent(:))];
+                    ent = -new_post.*log(new_post)*obj.dw^2;
+                    ch = [ch; nansum(ent(:))];
                 end
                 
                 h(xn1) = ch'*py;
@@ -170,8 +170,8 @@ classdef act
                 d1.stim = [d1.stim; xn1];
                 d1.resp = [d1.resp; binornd(1,1./(1+exp(-(0 + 1*xn1))))];
                 
-                newPostEnt = obj.posterior(d1);
-                newPostEntVal = -nansum(nansum(newPostEnt.*log(newPostEnt)))*obj.dw^2;
+                newPost = obj.posterior(d1);
+                newPostEntVal = -nansum(nansum(newPost.*log(newPost)))*obj.dw^2;
 %                 disp(newPostEnt);
                 postEnt = [postEnt; newPostEntVal];
                 
@@ -179,7 +179,7 @@ classdef act
 %                 hist(d1.stim,11); drawnow; 
 %                 plot(xn1_test,diffE); drawnow;
 %                 disp(xn1);
-                imagesc(obj.w0,obj.w1,newPostEnt); drawnow;
+                imagesc(obj.w0,obj.w1,newPost); drawnow;
 %                 if mod(length(d1.stim),10)==0
 %                     keyboard;
 %                 end

@@ -23,12 +23,12 @@ The posterior probability of the parameters $\vek w$ is
 \begin{align}
 	\prob{\vek w \mid X, Y} = \frac{\prob{Y \mid w, X} \prior{\vek w}}{\prob{Y \mid X}}
 \end{align}
-The denominator, \ie the marginal of the likelihood, is computed by taking the integral over all hypotheses:
+The denominator, \ie the marginal likelihood, is computed by taking the integral over all hypotheses:
 \begin{align}
 	\int \prob{Y \mid \vek w', X} \prior{\vek w'} \ud \vek w'
 	&= \iint \prob{Y \mid w_0, w_1, X} \prior{w_0, w_1} \ud w_0' \ud w_1'
 \end{align}
-The goal is to get a posterior $\prob{\vek \mid X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_n, Y_n$ instead of $X, Y$:
+The goal is to get a posterior $\prob{\vek w \mid X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_n, Y_n$ instead of $X, Y$:
 \begin{align}
 	H(\vek w \mid X_n Y_n) = - \int \prob{\vek w' \mid X_n, Y_n} \log[\prob{\vek w' \mid X_n, Y_n}] \ud \vek w' \,.
 \end{align}
@@ -43,5 +43,7 @@ In principle we would now like to choose our next stimulus $x_{n+1}$ such that i
 Here $\prob{y_{n+1} = 0/1 \mid X_n, Y_n, x_{n+1}}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
 \begin{align}
 	\prob{y_{n+1} = 0/1 \mid X_n, Y_n, x_{n+1}}
-	= \int \prob{y_{n+1} = 0/1 \mid \vek w', x_{n+1}} \prob{\vek w' \mid X_n, Y_n, x_{n+1}, y_{n+1} = 0/1} \ud \vek w'
+	= \int \prob{y_{n+1} = 0/1 \mid \vek w', x_{n+1}} \prob{\vek w' \mid X_n, Y_n} \ud \vek w'
 \end{align}
+For 
+

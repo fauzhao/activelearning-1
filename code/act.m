@@ -75,8 +75,6 @@ classdef act
                 case 'posterior'
                     dist = obj.posterior(data);
             end
-            
-            
                         
             [~,i]=max(dist(:)); %index of maximum value of distribution
             [row,col]=ind2sub([numel(obj.w0) numel(obj.w1)],i);
@@ -186,9 +184,17 @@ classdef act
 %                 end
             end
         end
+        
+        function best_xn1 = bestnext(obj,xn1_test,old_stim,old_resp)
+            d1.stim = old_stim;
+            d1.resp = old_resp;
+            
+            %Function takes the current dataset (can be empty struct)
+            diffE = obj.diffentropy(xn1_test,d1);
+            [~,idx] = min(diffE);
+            best_xn1 = xn1_test(idx);
+        end
     end
     
-    methods (Access=private)
-
-    end
+    
 end

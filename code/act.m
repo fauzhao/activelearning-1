@@ -2,6 +2,7 @@ classdef act
     properties
         data;
         dw = 0.1;
+        w_real = [2 1];
         w_range = [-1 1]*4;
     end
     
@@ -14,9 +15,9 @@ classdef act
         function obj = act
             %generate fake behavioural data
             obj.data.stim = randn(100,1);
-            obj.data.stim = [ones(10,1)*-3; ones(10,1)*3];
+%             obj.data.stim = [ones(10,1)*-3; ones(10,1)*3];
 
-            obj.data.resp = binornd(1,1./(1+exp(-(0 + 1*obj.data.stim))));
+            obj.data.resp = binornd(1,1./(1+exp(-(obj.w_real(1) + obj.w_real(2) *obj.data.stim))));
             plot(obj.data.stim,obj.data.resp,'o');
             
             obj.w0 = obj.w_range(1):obj.dw:obj.w_range(2);
@@ -168,7 +169,7 @@ classdef act
                 disp(xn1);
                 
                 d1.stim = [d1.stim; xn1];
-                d1.resp = [d1.resp; binornd(1,1./(1+exp(-(0 + 1*xn1))))];
+                d1.resp = [d1.resp; binornd(1,1./(1+exp(-(obj.w_real(1) + obj.w_real(2) *xn1))))];
                 
                 newPostEnt = obj.posterior(d1);
                 newPostEntVal = -nansum(nansum(newPostEnt.*log(newPostEnt)))*obj.dw^2;

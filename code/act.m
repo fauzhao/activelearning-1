@@ -1,7 +1,7 @@
 classdef act
     properties
-        dw = 0.05;
-        w_range = [-1 1]*4;
+        dw = 0.1;
+        w_range = [-1 1]*5;
     end
     
     properties (Access=private)
@@ -31,19 +31,20 @@ classdef act
 %                 end
 %             end
 
-%             %Less Fast method which tries to do this all in one go!
-%             Z = bsxfun(@times,W1',permute(stim,[3 2 1]));
-%             Z = bsxfun(@plus,W0',Z);
+%             %Slightly faster method which tries to do this all in one go!
+%             [W1,W0] = meshgrid(obj.w1,obj.w0);
+%             Z = bsxfun(@times,W1,permute(stim,[3 2 1]));
+%             Z = bsxfun(@plus,W0,Z);
 %             pGO = 1./(1+exp(-Z));
 %             l = bsxfun(@times,pGO,permute(resp==1,[3 2 1])) + bsxfun(@times,(1-pGO),permute(resp==0,[3 2 1]));
 %             l = prod(l,3);
             
-            %Fastest method (so far) which calculates the entire W matrix for each trial
+%             %Fastest method (so far) which calculates the entire W matrix for each trial
             numTrials = length(stim);
-            [W0,W1] = meshgrid(obj.w0,obj.w1);
+            [W1,W0] = meshgrid(obj.w1,obj.w0);
             l = nan(numel(obj.w0),numel(obj.w1),numTrials);
             for t = 1:numTrials
-                pGO = 1./(1+exp(-(W0' + W1'*stim(t))));
+                pGO = 1./(1+exp(-(W0 + W1*stim(t))));
                 l(:,:,t) = pGO*resp(t) + (1-pGO)*(1-resp(t));
             end
             l = prod(l,3);
@@ -52,8 +53,8 @@ classdef act
         function p = prior(obj)
             %prior on w is a 2D normal dist with mean 0 and spherical
             %covariance
-            [W0,W1] = meshgrid(obj.w0,obj.w1);
-            p = mvnpdf([W0(:) W1(:)],[0 0],eye(2)*0.5);
+            [W1,W0] = meshgrid(obj.w1,obj.w0);
+            p = mvnpdf([W0(:) W1(:)],[0 0],eye(2)*10);
             p = reshape(p,size(W0));
         end
         
@@ -115,11 +116,11 @@ classdef act
         function py = predict(obj,newX,posterior)
             %Integrate over all w in the posterior to calculate the
             %prediction
-            [W0,W1] = meshgrid(obj.w0,obj.w1);
-            
+            [W1,W0] = meshgrid(obj.w1,obj.w0);
+
             py=[];
             for xn = 1:length(newX)
-                phat = obj.dw * obj.dw * posterior./(1+exp(-(W0' + W1'*newX(xn))));
+                phat = obj.dw * obj.dw * posterior./(1+exp(-(W0 + W1*newX(xn))));
                 py(xn) = sum(phat(:));
             end            
         end
@@ -129,17 +130,17 @@ classdef act
             %expectation of the entropy over all possible yn+1
             old_post = obj.posterior(data);
                         
-            for xn1 = 1:length(xn1_list)
-                %Calculate new posterior including extra datapoint
-                
+            for xn1 = 1:length(xn1_list)                
                 ch = []; py = [];
                 for yn1 = [1 0]
-                    d2 = data;
-                    d2.stim = [d2.stim; xn1_list(xn1)];
-                    d2.resp = [d2.resp; yn1];
-
-                    %calculate new posterior
-                    new_post = obj.posterior(d2);
+                    
+                    %calculate new posterior by iterating 1 new datapoint from the old
+                    %posterior                    
+                    d2.stim = xn1_list(xn1);
+                    d2.resp = yn1;
+                    lik = obj.likelihood(d2);
+                    new_post = old_post.*lik;
+                    new_post = new_post/(sum(new_post(:))*obj.dw^2);
                     
                     %calculate predictive dist
                     p = obj.predict(xn1_list(xn1),old_post);
@@ -161,40 +162,41 @@ classdef act
             %stimuli, checking that the entropy is decreasing over this
             %process
             f = figure;
-            s1 = subplot(2,1,1);
-            s2 = subplot(2,1,2);
+            s1 = subplot(3,1,1);
+            s2 = subplot(3,1,2);
+            s3 = subplot(3,1,3);
             
             d1.stim = [];
             d1.resp = [];
             
             postEnt = [];
             while true
+                
+                %Use bayesian active learning for selecting next xn+1
                 xn1_test = -5 + 10*rand(1,11);
-                
-                
                 diffE = obj.diffentropy(xn1_test,d1);
                 [~,idx] = min(diffE);
                 xn1 = xn1_test(idx);
                 disp(xn1);
                 
-                d1.stim = [d1.stim; xn1];
-                d1.resp = [d1.resp; binornd(1,1./(1+exp(-(0 + 1*xn1))))];
+                %Try out a whole bunch of other heuristics for selecting
+                %xn+1, and assess how the posterior entropy decreases over
+                %time
                 
+                d1.stim = [d1.stim; xn1];
+                d1.resp = [d1.resp; binornd(1,1./(1+exp(-(-1 + 1*xn1))))]; %adding fake yn+1
+                
+                %Measure differential entropy of the new posterior
                 newPost = obj.posterior(d1);
                 newPostEntVal = -nansum(nansum(newPost.*log(newPost)))*obj.dw^2;
-%                 disp(newPostEnt);
                 postEnt = [postEnt; newPostEntVal];
-                
-%                 plot(postEnt); drawnow;
-%                 hist(d1.stim,11); drawnow; 
-%                 plot(xn1_test,diffE); drawnow;
-%                 disp(xn1);
+
                 imagesc(s1,obj.w0,obj.w1,newPost);
-%                 if mod(length(d1.stim),10)==0
-%                     keyboard;
-%                 end
-                plot(s2,postEnt); xlabel('Iter'); ylabel('Posterior entropy');
+                plot(s2,postEnt); xlabel('Iter'); ylabel('Posterior differential entropy');
+                hist(s3,d1.stim,30); 
                 drawnow;
+                
+                
             end
         end
         

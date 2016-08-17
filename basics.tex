@@ -1,15 +1,41 @@
 % !TEX root = ./active_learning.tex
 
+\subsection*{General introduction} % (fold)
+\label{sub:general_introduction}
+Data $\data$. Parameters $\params$. Input $\inp$. Output $\outp$.
+We want to maximize the expected information gain of the input $\inp$:
+\begin{align}
+	\utility(\inp)
+	= H[p(\params | \data)]
+	- \expect{\outp | \inp, \data} H[\prob{\params | \data, \inp, \outp}] \,,
+\end{align}
+which corresponds to minimizing the second term. This is called posterior entropy minimization.
+We can get an alternative formulation by noting that
+\begin{align}
+	\utility(\inp)
+	&= I[\params, \outp | \data, \inp] \\
+	&= H[\prob{\outp | \inp, \data}]
+	- \expect{\params | \data} H[\prob{\outp | \inp, \params}] \,,
+\end{align}
+where $I$ is the mutual information, which is symmetric in its arguments. Writing it this way allows for a different interpretation of $\utility(\inp)$
+Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input $\inp$ for which we don't know yet what the output $\outp$ will be. Furthermore $\expect{\params | \data} H[\prob{\inp | \outp, \params}]$ should be small, because we don't want to choose an input $\inp$ for which the output $\outp$ is very uncertain.
+\note{Copied from Houlsby thesis:}
+In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions (term 2), but these predictions are highly diverse. That is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
+
+% subsection general_introduction (end)
+
+\note{Maybe start even earlier, with the most important points of the Houlsby introduction.}
+
 We assume a prior $\prior{w}$ where $\vek w$ is a vector of parameters that describe our model.
 As the model we use a sigmoid function
 \begin{align}
 	\sigmoid{w_0, w_1, x} = \frac{1}{1 + \exp[-(w_0 - w_1 x)]}
 \end{align}
 \note{This might not be the best way to write the sigmoid.}
-We collect data $n$ data points by presenting a stimulus $x \in \mathbb{R}$ and observing a binary response $y \in \set{0, 1}$:
+We collect data $N$ data points by presenting a stimulus $x \in \mathbb{R}$ and observing a binary response $y \in \set{0, 1}$:
 \begin{align}
-	 D = \set{(x_1, y_1), \dots, (x_n, y_n)} \equiv (X, Y)
-	 % D = \set{y_1, \dots, y_n} \equiv (X, Y)
+	 D = \set{(x_1, y_1), \dots, (x_N, y_N)} \equiv (X, Y)
+	 % D = \set{y_1, \dots, y_N} \equiv (X, Y)
 \end{align}
 The likelihood of the parameters $\vek w$ given the data $D$ is given by
 \begin{align}
@@ -28,22 +54,22 @@ The denominator, \ie the marginal likelihood, is computed by taking the integral
 	\int \prob{Y \mid \vek w', X} \prior{\vek w'} \ud \vek w'
 	&= \iint \prob{Y \mid w_0, w_1, X} \prior{w_0, w_1} \ud w_0' \ud w_1'
 \end{align}
-The goal is to get a posterior $\prob{\vek w \mid X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_n, Y_n$ instead of $X, Y$:
+The goal is to get a posterior $\prob{\vek w \mid X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_N, Y_N$ instead of $X, Y$:
 \begin{align}
-	H(\vek w \mid X_n Y_n) = - \int \prob{\vek w' \mid X_n, Y_n} \log[\prob{\vek w' \mid X_n, Y_n}] \ud \vek w' \,.
+	H[\prob{\vek w \mid X_N Y_N}] = - \int \prob{\vek w' \mid X_N, Y_N} \log[\prob{\vek w' \mid X_N, Y_N}] \ud \vek w' \,.
 \end{align}
-In principle we would now like to choose our next stimulus $x_{n+1}$ such that it minimizes the resulting entropy $H(\vek w \mid X_n, Y_n, x_{n+1}, y_{n+1})$, but we do not know what $y_{n+1}$ is. So we want to find the $x_{n+1}$ that minimizes the mean:
+In principle we would now like to choose our next stimulus $x_{N+1}$ such that it minimizes the resulting entropy $H(\vek w \mid X_N, Y_N, x_{N+1}, y_{N+1})$, but we do not know what $y_{N+1}$ is. So we want to find the $x_{N+1}$ that minimizes the mean:
 \begin{align}
-	K(x_{n+1}) =&~ H(\vek w \mid X_n, Y_n, x_{n+1}, y_{n+1} = 0) ~
-	\prob{y_{n+1} = 0 \mid X_n, Y_n, x_{n+1}} \\
+	K(x_{N+1}) =&~ H[\prob{\vek w \mid X_N, Y_N, x_{N+1}, y_{N+1} = 0}] ~
+	\prob{y_{N+1} = 0 \mid X_N, Y_N, x_{N+1}} \\
 	&+
-	H(\vek w \mid X_n, Y_n, x_{n+1}, y_{n+1} = 1) ~
-	\prob{y_{n+1} = 1 \mid X_n, Y_n, x_{n+1}} \,.
+	H[\prob{\vek w \mid X_N, Y_N, x_{N+1}, y_{N+1} = 1}] ~
+	\prob{y_{N+1} = 1 \mid X_N, Y_N, x_{N+1}} \,.
 \end{align}
-Here $\prob{y_{n+1} = 0/1 \mid X_n, Y_n, x_{n+1}}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
+Here $\prob{y_{N+1} = 0/1 \mid X_N, Y_N, x_{N+1}}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
 \begin{align}
-	\prob{y_{n+1} = 0/1 \mid X_n, Y_n, x_{n+1}}
-	= \int \prob{y_{n+1} = 0/1 \mid \vek w', x_{n+1}} \prob{\vek w' \mid X_n, Y_n} \ud \vek w'
+	\prob{y_{N+1} = 0/1 \mid X_N, Y_N, x_{N+1}}
+	= \int \prob{y_{N+1} = 0/1 \mid \vek w', x_{N+1}} \prob{\vek w' \mid X_N, Y_N} \ud \vek w'
 \end{align}
 For 
 

@@ -1,7 +1,9 @@
 classdef act
     properties
         dw = 0.1;
-        w_range = [-1 1]*5;
+        w_range = [-1 1]*20;
+        prior_mean = [0 0];
+        prior_cov = eye(2)*15;
     end
     
     properties (Access=private)
@@ -54,8 +56,9 @@ classdef act
             %prior on w is a 2D normal dist with mean 0 and spherical
             %covariance
             [W1,W0] = meshgrid(obj.w1,obj.w0);
-            p = mvnpdf([W0(:) W1(:)],[0 0],eye(2)*10);
+            p = mvnpdf([W0(:) W1(:)],obj.prior_mean,obj.prior_cov);
             p = reshape(p,size(W0));
+            p = p/sum(p(:)*obj.dw^2); %renormalise if truncated
         end
         
         function p = posterior(obj,data)
@@ -92,7 +95,7 @@ classdef act
         
         function run(obj,trueW0,trueW1) %Try this on fake data
             %Generate fake dataset
-            d1.stim = randn(100,1);
+            d1.stim = -1 + 2*rand(100,1);
             d1.resp = binornd(1,1./(1+exp(-(trueW0 + trueW1*d1.stim))));
             
             figure;
@@ -161,55 +164,92 @@ classdef act
             %Start with initially small data-set and keep adding new
             %stimuli, checking that the entropy is decreasing over this
             %process
+            warning('Only works up to about 1000 trials due to numerical instability');
+            
             f = figure;
             s1 = subplot(3,1,1);
             s2 = subplot(3,1,2);
             s3 = subplot(3,1,3);
+                        
+            postEnt = []; 
             
-            d1.stim = [];
-            d1.resp = [];
+            methods = {'random','activelearning'};
             
-            postEnt = [];
-            while true
-                
-                %Use bayesian active learning for selecting next xn+1
-                xn1_test = -5 + 10*rand(1,11);
-                diffE = obj.diffentropy(xn1_test,d1);
-                [~,idx] = min(diffE);
-                xn1 = xn1_test(idx);
-                disp(xn1);
-                
-                %Try out a whole bunch of other heuristics for selecting
+            stim = cell(1,length(methods));
+            resp = cell(1,length(methods));
+            
+            xn1_test = linspace(-1,1,40);
+            for i = 1:1200
+                %Try out a whole bunch of heuristics for selecting
                 %xn+1, and assess how the posterior entropy decreases over
                 %time
-                
-                d1.stim = [d1.stim; xn1];
-                d1.resp = [d1.resp; binornd(1,1./(1+exp(-(-1 + 1*xn1))))]; %adding fake yn+1
-                
-                %Measure differential entropy of the new posterior
-                newPost = obj.posterior(d1);
-                newPostEntVal = -nansum(nansum(newPost.*log(newPost)))*obj.dw^2;
-                postEnt = [postEnt; newPostEntVal];
+                       
+%                 xn1_test = -1 + 2*rand(1,40);                                            
+                for m = 1:length(methods)
+                    xn1 = obj.getnext(methods{m},xn1_test,stim{m},resp{m});
+                    
+                    stim{m} = [stim{m}; xn1];
+                    resp{m} = [resp{m}; binornd(1,1./(1+exp(-(0 + 7*xn1))))];
+                    
+                    %Measure differential entropy of the new posterior
+                    newPost = obj.posterior(struct('stim',stim{m},'resp',resp{m}));
+                    newPostEntVal = -nansum(nansum(newPost.*log(newPost)))*obj.dw^2;
+                    postEnt(i,m) = newPostEntVal;
+                end
+
 
                 imagesc(s1,obj.w0,obj.w1,newPost);
                 plot(s2,postEnt); xlabel('Iter'); ylabel('Posterior differential entropy');
-                hist(s3,d1.stim,30); 
+                hist(s3,stim{2}); 
                 drawnow;
                 
+                %Rescale W range by the range of the current posterior
+                w1_marginal = sum(newPost,1);
+                w0_marginal = sum(newPost,2);
+                if w1_marginal(1) <0.00001
+                    obj.w1(1) = [];
+                end
+                
+                if w1_marginal(end) <0.00001
+                    obj.w1(end) = [];
+                end
+                
+                if w0_marginal(1) <0.00001
+                    obj.w0(1) = [];
+                end
+                
+                if w0_marginal(end) <0.00001
+                    obj.w0(end) = [];
+                end
+                
+                if numel(newPost) <1000
+                    obj.dw = obj.dw/2;
+                    obj.w1 = obj.w1(1) : obj.dw : obj.w1(end);
+                    obj.w0 = obj.w0(1) : obj.dw : obj.w0(end);
+                end
                 
             end
         end
         
-        function best_xn1 = bestnext(obj,xn1_test,old_stim,old_resp)
-            d1.stim = old_stim;
-            d1.resp = old_resp;
+        function best_xn1 = getnext(obj,method,xn1_test,old_stim,old_resp)
+            switch(method)
+                case 'activelearning' %Uses active learning to select xn+1
+                    d1.stim = old_stim;
+                    d1.resp = old_resp;
+                    
+                    %Function takes the current dataset (can be empty struct)
+                    diffE = obj.diffentropy(xn1_test,d1);
+                    [~,idx] = min(diffE);
+                    best_xn1 = xn1_test(idx);
+                case 'random' %Just selects at random from the candidates
+                    best_xn1 = randsample(xn1_test,1);
+                case '0'
+                    best_xn1 = 0;
             
-            %Function takes the current dataset (can be empty struct)
-            diffE = obj.diffentropy(xn1_test,d1);
-            [~,idx] = min(diffE);
-            best_xn1 = xn1_test(idx);
+            end
         end
     end
+    
     
     
 end

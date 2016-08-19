@@ -93,11 +93,15 @@ classdef act
             title([which ' w0_{max}=' num2str(obj.w0(row)) ' w1_{max}=' num2str(obj.w1(col)) ]);
         end
         
-        function run(obj,trueW0,trueW1) %Try this on fake data
-            %Generate fake dataset
+        function simulate(obj,trueW0,trueW1)
             d1.stim = -1 + 2*rand(100,1);
             d1.resp = binornd(1,1./(1+exp(-(trueW0 + trueW1*d1.stim))));
             
+            obj.fit(d1);
+        end
+        
+        function fit(obj,d1) %Try this on fake data
+            %Generate fake dataset
             figure;
             subplot(2,3,1);
             obj.plotfcn('prior',d1); 

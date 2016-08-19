@@ -11,7 +11,7 @@ classdef act
         w1;
     end
     
-    methods
+    methods (Access=public)
         function obj = act
             obj.w0 = obj.w_range(1) : obj.dw : obj.w_range(2);
             obj.w1 = obj.w_range(1) : obj.dw : obj.w_range(2);
@@ -20,26 +20,6 @@ classdef act
         function l = likelihood(obj,data)
             stim = data.stim; %must be column vector
             resp = data.resp; %must be column vector
-%             
-             %Original method
-%             l = nan(numel(obj.w0),numel(obj.w1));
-%             for w0idx = 1:numel(obj.w0)
-%                 for w1idx = 1:numel(obj.w1)
-%                     w = [obj.w0(w0idx) obj.w1(w1idx)];
-%                     z = w(1) + w(2)*stim;
-%                     pGO = 1./(1+exp(-z));
-%                     lik = pGO.*(resp==1) + (1-pGO).*(resp==0);
-%                     l(w0idx,w1idx) = prod(lik);
-%                 end
-%             end
-
-%             %Slightly faster method which tries to do this all in one go!
-%             [W1,W0] = meshgrid(obj.w1,obj.w0);
-%             Z = bsxfun(@times,W1,permute(stim,[3 2 1]));
-%             Z = bsxfun(@plus,W0,Z);
-%             pGO = 1./(1+exp(-Z));
-%             l = bsxfun(@times,pGO,permute(resp==1,[3 2 1])) + bsxfun(@times,(1-pGO),permute(resp==0,[3 2 1]));
-%             l = prod(l,3);
             
 %             %Fastest method (so far) which calculates the entire W matrix for each trial
             numTrials = length(stim);
@@ -93,8 +73,8 @@ classdef act
             title([which ' w0_{max}=' num2str(obj.w0(row)) ' w1_{max}=' num2str(obj.w1(col)) ]);
         end
         
-        function simulate(obj,trueW0,trueW1)
-            d1.stim = -1 + 2*rand(100,1);
+        function simulate(obj,trueW0,trueW1,numtrials)
+            d1.stim = -1 + 2*rand(numtrials,1);
             d1.resp = binornd(1,1./(1+exp(-(trueW0 + trueW1*d1.stim))));
             
             obj.fit(d1);
@@ -170,10 +150,15 @@ classdef act
             %process
             warning('Only works up to about 1000 trials due to numerical instability');
             
+            true_w0 = 3;
+            true_w1 = 10;
+            
             f = figure;
-            s1 = subplot(3,1,1);
+            s(1) = subplot(3,2,1);
+            s(2) = subplot(3,2,2);
             s2 = subplot(3,1,2);
-            s3 = subplot(3,1,3);
+            s3(1) = subplot(3,2,5);
+            s3(2) = subplot(3,2,6);
                         
             postEnt = []; 
             
@@ -188,45 +173,50 @@ classdef act
                 %xn+1, and assess how the posterior entropy decreases over
                 %time
                        
-%                 xn1_test = -1 + 2*rand(1,40);                                            
+%                 xn1_test = -1 + 2*rand(1,40);   
+                newPost=[];
                 for m = 1:length(methods)
                     xn1 = obj.getnext(methods{m},xn1_test,stim{m},resp{m});
                     
                     stim{m} = [stim{m}; xn1];
-                    resp{m} = [resp{m}; binornd(1,1./(1+exp(-(0 + 7*xn1))))];
+                    resp{m} = [resp{m}; binornd(1,1./(1+exp(-(true_w0 + true_w1*xn1))))];
                     
                     %Measure differential entropy of the new posterior
-                    newPost = obj.posterior(struct('stim',stim{m},'resp',resp{m}));
-                    newPostEntVal = -nansum(nansum(newPost.*log(newPost)))*obj.dw^2;
+                    newPost(:,:,m) = obj.posterior(struct('stim',stim{m},'resp',resp{m}));
+                    newPostEntVal = -nansum(nansum(newPost(:,:,m).*log(newPost(:,:,m))))*obj.dw^2;
                     postEnt(i,m) = newPostEntVal;
+                    
+                    imagesc(s(m),obj.w0,obj.w1,newPost(:,:,m)); 
+                    hold(s(m),'on'); plot(s(m),true_w0,true_w1,'k+'); 
+                    hold(s(m),'off');
+                    hist(s3(m),stim{m},40);
                 end
 
-
-                imagesc(s1,obj.w0,obj.w1,newPost);
                 plot(s2,postEnt); xlabel('Iter'); ylabel('Posterior differential entropy');
-                hist(s3,stim{2}); 
                 drawnow;
                 
                 %Rescale W range by the range of the current posterior
-                w1_marginal = sum(newPost,1);
-                w0_marginal = sum(newPost,2);
-                if w1_marginal(1) <0.00001
-                    obj.w1(1) = [];
+                combined = sum(newPost,3);
+                w1_marginal = sum(combined,1);
+                w0_marginal = sum(combined,2);
+
+                if w1_marginal(2) <0.00001
+                    obj.w1(1:2) = [];
                 end
                 
-                if w1_marginal(end) <0.00001
-                    obj.w1(end) = [];
+                if w1_marginal(end-1) <0.00001
+                    obj.w1(end-1:end) = [];
                 end
                 
-                if w0_marginal(1) <0.00001
-                    obj.w0(1) = [];
+                if w0_marginal(2) <0.00001
+                    obj.w0(1:2) = [];
                 end
                 
-                if w0_marginal(end) <0.00001
-                    obj.w0(end) = [];
+                if w0_marginal(end-1) <0.00001
+                    obj.w0(end-1:end) = [];
                 end
                 
-                if numel(newPost) <1000
+                if numel(newPost) < 4000
                     obj.dw = obj.dw/2;
                     obj.w1 = obj.w1(1) : obj.dw : obj.w1(end);
                     obj.w0 = obj.w0(1) : obj.dw : obj.w0(end);
@@ -251,6 +241,51 @@ classdef act
                     best_xn1 = 0;
             
             end
+        end
+        
+        function est_posterior_w = posterior_MH(obj,data)
+            numIter = 2000;
+            
+            w_prev = [0 0];
+            q = @(w_prev)mvnrnd(w_prev,eye(2)*10);
+            
+            est_posterior_w = nan(numIter,2);
+            
+            figure;
+            for iter = 1:numIter                
+                w_next = q(w_prev);
+                alpha = obj.p_lik(w_next,data)*obj.p_prior(w_next) / ...
+                        (obj.p_lik(w_prev,data)*obj.p_prior(w_prev));
+
+                if alpha >= 1 || binornd(1,alpha)==1
+                    w_prev = w_next;
+                end
+                
+                est_posterior_w(iter,:) = w_prev;
+                
+%                 hist(est_posterior_w); drawnow;
+            end
+            
+        end
+        
+    end
+    
+    methods (Access=private)
+        function p = p_prior(obj,w)
+            p = mvnpdf(w,obj.prior_mean,obj.prior_cov);
+        end
+        
+        function l = p_lik(~,w,data)
+            stim = data.stim; %must be column vector
+            resp = data.resp; %must be column vector
+            
+            numTrials = length(stim);
+            l = nan(numTrials,1);
+            for t = 1:numTrials
+                pGO = 1./(1+exp(-(w(1) + w(2)*stim(t))));
+                l(t,1) = pGO*resp(t) + (1-pGO)*(1-resp(t));
+            end
+            l = prod(l);
         end
     end
     

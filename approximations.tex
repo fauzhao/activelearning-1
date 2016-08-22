@@ -11,13 +11,10 @@ We need to discretize the $x$ anyways. We choose values.
 
 \subsection{Approximating the posterior} % (fold)
  \label{sub:approximating_the_posterior}
- Maybe MC methods?
+We often determine the mean of a function over the posterior distribution. This is computationally expensive, in particular for large parameter spaces.
+If we take samples of the posterior and approximate the integrals by smaller sums over the samples, we can save computation time. To get good samples from the posterior distribution we use the Metropolis-Hastings algorithm as an implementation of Markov Chain Monte Carlo integration.
+As a proposal distribution $Q(x;x')$ we choose a multi variate normal distribution which determines the random walk that samples from the posterior.
  % subsection approximating_the_posterior (end) 
-
-\subsection{Using a different utility function} % (fold)
-\label{sub:using_a_different_utility_function}
-BALD learning?
-% subsection using_a_different_utility_function (end)
 
 % subsection restricting_the_tested_stimuli (end)
 % section approximations (end)

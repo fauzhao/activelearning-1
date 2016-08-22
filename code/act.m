@@ -1,7 +1,7 @@
 classdef act
     properties
         dw = 0.1;
-        w_range = [-1 1]*20;
+        w_range = [-20 20];
         prior_mean = [0 0];
         prior_cov = eye(2)*15;
     end
@@ -27,6 +27,7 @@ classdef act
             l = nan(numel(obj.w0),numel(obj.w1),numTrials);
             for t = 1:numTrials
                 pGO = 1./(1+exp(-(W0 + W1*stim(t))));
+%                 pGO = 1./(1+exp(-(W1.*(stim(t) - W0))));
                 l(:,:,t) = pGO*resp(t) + (1-pGO)*(1-resp(t));
             end
             l = prod(l,3);
@@ -162,7 +163,7 @@ classdef act
                         
             postEnt = []; 
             
-            methods = {'random','activelearning'};
+            methods = {'ladder','activelearning'};
             
             stim = cell(1,length(methods));
             resp = cell(1,length(methods));
@@ -239,7 +240,15 @@ classdef act
                     best_xn1 = randsample(xn1_test,1);
                 case '0'
                     best_xn1 = 0;
-            
+                case 'ladder' %Chooses stimuli along the paradoxical ladder
+                    if isempty(old_stim)
+                        best_xn1 = 0;
+                    else
+                        n = length(old_stim) + 1;
+                        xn_old = old_stim(end);
+                        yn_old = old_resp(end);
+                        best_xn1 = xn_old + (-1)^(yn_old) * (2*0.7) / 2^n;
+                    end
             end
         end
         

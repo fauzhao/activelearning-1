@@ -1,8 +1,25 @@
 % !TEX root = ./active_learning.tex
 
-\subsection*{General introduction} % (fold)
-\label{sub:general_introduction}
-Data $\data$. Parameters $\params$. Input $\inp$. Output $\outp$.
+\section*{General introduction} % (fold)
+\label{sec:general_introduction}
+Notation: \\
+Data $\data$. New data $\data^*$ Parameters $\params$. Input $\inp$. Output $\outp$. Model $\model$. \\
+
+The \emph{predictive distribution} is the probability $\prob{\data^* | \data, \model}$ of observing a new data point $\data^*$ given the old data $\data$ and a model $\model$.
+\begin{align*}
+	\prob{\data^* | \data, \model}
+	&= \int \ud \params
+		\prob{\data^*, \params | \data, \model} \\
+	&= \int \ud \params
+		\prob{\data^* | \data, \model, \params}
+		\prob{\params | \data, \model} \\
+	&= \int \ud \params
+		\prob{\data^* | \model, \params}
+		\prob{\params | \data, \model} \,,
+\end{align*}
+where in the last step we used $\prob{\data^* | \data, \model, \params} = \prob{\data^* | \model, \params}$, because the new data should depend only on the model and the parameters and not on the collected data. That is, we assume that the model captures all the structure in the data. This assumption is typical for Bayesian inference.
+
+
 We want to maximize the expected information gain of the input $\inp$:
 \begin{align}
 	\utility(\inp)
@@ -34,42 +51,43 @@ As the model we use a sigmoid function
 \note{This might not be the best way to write the sigmoid.}
 We collect data $N$ data points by presenting a stimulus $x \in \mathbb{R}$ and observing a binary response $y \in \set{0, 1}$:
 \begin{align}
-	 D = \set{(x_1, y_1), \dots, (x_N, y_N)} \equiv (X, Y)
+	 D = \set{(x_1, y_1), \dots, (x_N, y_N)} \equiv (X^N, Y^N)
 	 % D = \set{y_1, \dots, y_N} \equiv (X, Y)
 \end{align}
+\note{We drop the $N$, if it is not needed to dissociated the steps.}
 The likelihood of the parameters $\vek w$ given the data $D$ is given by
 \begin{align}
-	\prob{Y \mid \vek w, X}
-	&= \prod_{i=1}^n \prob{y_i \mid \vek w, x_i} \\
-	&= \prod_{i=1}^n \sigmoid{w_0 + w_1 x}^{y_i}
+	\prob{Y^N | \vek w, X^N}
+	&= \prod_{i=1}^N \prob{y_i | \vek w, x_i} \\
+	&= \prod_{i=1}^N \sigmoid{w_0 + w_1 x}^{y_i}
 		\left( 1 - \sigmoid{w_0 + w_1 x} \right)^{1-y_i}
 \end{align}
 \note{The stimuli $x$ are not considered part of the data, because we have control over it}
 The posterior probability of the parameters $\vek w$ is
 \begin{align}
-	\prob{\vek w \mid X, Y} = \frac{\prob{Y \mid w, X} \prior{\vek w}}{\prob{Y \mid X}}
+	\prob{\vek w | X, Y} = \frac{\prob{Y | w, X} \prior{\vek w}}{\prob{Y | X}}
 \end{align}
 The denominator, \ie the marginal likelihood, is computed by taking the integral over all hypotheses:
 \begin{align}
-	\int \prob{Y \mid \vek w', X} \prior{\vek w'} \ud \vek w'
-	&= \iint \prob{Y \mid w_0, w_1, X} \prior{w_0, w_1} \ud w_0' \ud w_1'
+	\int \prob{Y | \vek w', X} \prior{\vek w'} \ud \vek w'
+	&= \iint \prob{Y | w_0, w_1, X} \prior{w_0, w_1} \ud w_0' \ud w_1'
 \end{align}
-The goal is to get a posterior $\prob{\vek w \mid X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_N, Y_N$ instead of $X, Y$:
+The goal is to get a posterior $\prob{\vek w | X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_N, Y_N$ instead of $X, Y$:
 \begin{align}
-	H[\prob{\vek w \mid X_N Y_N}] = - \int \prob{\vek w' \mid X_N, Y_N} \log[\prob{\vek w' \mid X_N, Y_N}] \ud \vek w' \,.
+	H[\prob{\vek w | X_N Y_N}] = - \int \prob{\vek w' | X_N, Y_N} \log[\prob{\vek w' | X_N, Y_N}] \ud \vek w' \,.
 \end{align}
-In principle we would now like to choose our next stimulus $x_{N+1}$ such that it minimizes the resulting entropy $H(\vek w \mid X_N, Y_N, x_{N+1}, y_{N+1})$, but we do not know what $y_{N+1}$ is. So we want to find the $x_{N+1}$ that minimizes the mean:
+In principle we would now like to choose our next stimulus $x$ such that it minimizes the resulting entropy $H(\vek w | X_N, Y_N, x, y)$, but we do not know what $y$ is going to be. So we want to find the $x$ that minimizes the mean:
 \begin{align}
-	K(x_{N+1}) =&~ H[\prob{\vek w \mid X_N, Y_N, x_{N+1}, y_{N+1} = 0}] ~
-	\prob{y_{N+1} = 0 \mid X_N, Y_N, x_{N+1}} \\
+	K(x) =&~ H[\prob{\vek w | X_N, Y_N, x, y = 0}] ~
+	\prob{y = 0 | X_N, Y_N, x} \\
 	&+
-	H[\prob{\vek w \mid X_N, Y_N, x_{N+1}, y_{N+1} = 1}] ~
-	\prob{y_{N+1} = 1 \mid X_N, Y_N, x_{N+1}} \,.
+	H[\prob{\vek w | X_N, Y_N, x, y = 1}] ~
+	\prob{y = 1 | X_N, Y_N, x} \,.
 \end{align}
-Here $\prob{y_{N+1} = 0/1 \mid X_N, Y_N, x_{N+1}}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
+Here $\prob{y = 0/1 | X_N, Y_N, x}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
 \begin{align}
-	\prob{y_{N+1} = 0/1 \mid X_N, Y_N, x_{N+1}}
-	= \int \prob{y_{N+1} = 0/1 \mid \vek w', x_{N+1}} \prob{\vek w' \mid X_N, Y_N} \ud \vek w'
+	\prob{y = 0/1 | X_N, Y_N, x}
+	= \int \prob{y = 0/1 | \vek w', x} \prob{\vek w' | X_N, Y_N} \ud \vek w'
 \end{align}
-For 
+
 

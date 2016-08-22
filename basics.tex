@@ -19,7 +19,6 @@ The \emph{predictive distribution} is the probability $\prob{\data^* | \data, \m
 \end{align*}
 where in the last step we used $\prob{\data^* | \data, \model, \params} = \prob{\data^* | \model, \params}$, because the new data should depend only on the model and the parameters and not on the collected data. That is, we assume that the model captures all the structure in the data. This assumption is typical for Bayesian inference.
 
-
 We want to maximize the expected information gain of the input $\inp$:
 \begin{align}
 	\utility(\inp)
@@ -38,56 +37,4 @@ where $I$ is the mutual information, which is symmetric in its arguments. Writin
 Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input $\inp$ for which we don't know yet what the output $\outp$ will be. Furthermore $\expect{\params | \data} H[\prob{\inp | \outp, \params}]$ should be small, because we don't want to choose an input $\inp$ for which the output $\outp$ is very uncertain.
 \note{Copied from Houlsby thesis:}
 In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions (term 2), but these predictions are highly diverse. That is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
-
 % subsection general_introduction (end)
-
-\note{Maybe start even earlier, with the most important points of the Houlsby introduction.}
-
-We assume a prior $\prior{w}$ where $\vek w$ is a vector of parameters that describe our model.
-As the model we use a sigmoid function
-\begin{align}
-	\sigmoid{w_0, w_1, x} = \frac{1}{1 + \exp[-(w_0 - w_1 x)]}
-\end{align}
-\note{This might not be the best way to write the sigmoid.}
-We collect data $N$ data points by presenting a stimulus $x \in \mathbb{R}$ and observing a binary response $y \in \set{0, 1}$:
-\begin{align}
-	 D = \set{(x_1, y_1), \dots, (x_N, y_N)} \equiv (X^N, Y^N)
-	 % D = \set{y_1, \dots, y_N} \equiv (X, Y)
-\end{align}
-\note{We drop the $N$, if it is not needed to dissociated the steps.}
-The likelihood of the parameters $\vek w$ given the data $D$ is given by
-\begin{align}
-	\prob{Y^N | \vek w, X^N}
-	&= \prod_{i=1}^N \prob{y_i | \vek w, x_i} \\
-	&= \prod_{i=1}^N \sigmoid{w_0 + w_1 x}^{y_i}
-		\left( 1 - \sigmoid{w_0 + w_1 x} \right)^{1-y_i}
-\end{align}
-\note{The stimuli $x$ are not considered part of the data, because we have control over it}
-The posterior probability of the parameters $\vek w$ is
-\begin{align}
-	\prob{\vek w | X, Y} = \frac{\prob{Y | w, X} \prior{\vek w}}{\prob{Y | X}}
-\end{align}
-The denominator, \ie the marginal likelihood, is computed by taking the integral over all hypotheses:
-\begin{align}
-	\int \prob{Y | \vek w', X} \prior{\vek w'} \ud \vek w'
-	&= \iint \prob{Y | w_0, w_1, X} \prior{w_0, w_1} \ud w_0' \ud w_1'
-\end{align}
-The goal is to get a posterior $\prob{\vek w | X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\vek w$. By \emph{current} we mean that we use the data we have discovered in the $n$ steps until now. To make this clear we write $X_N, Y_N$ instead of $X, Y$:
-\begin{align}
-	H[\prob{\vek w | X_N Y_N}] = - \int \prob{\vek w' | X_N, Y_N} \log[\prob{\vek w' | X_N, Y_N}] \ud \vek w' \,.
-\end{align}
-In principle we would now like to choose our next stimulus $x$ such that it minimizes the resulting entropy $H(\vek w | X_N, Y_N, x, y)$, but we do not know what $y$ is going to be. So we want to find the $x$ that minimizes the mean:
-\begin{align}
-	K(x) =&~ H[\prob{\vek w | X_N, Y_N, x, y = 0}] ~
-	\prob{y = 0 | X_N, Y_N, x} \\
-	&+
-	H[\prob{\vek w | X_N, Y_N, x, y = 1}] ~
-	\prob{y = 1 | X_N, Y_N, x} \,.
-\end{align}
-Here $\prob{y = 0/1 | X_N, Y_N, x}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
-\begin{align}
-	\prob{y = 0/1 | X_N, Y_N, x}
-	= \int \prob{y = 0/1 | \vek w', x} \prob{\vek w' | X_N, Y_N} \ud \vek w'
-\end{align}
-
-

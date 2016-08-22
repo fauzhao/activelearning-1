@@ -252,52 +252,5 @@ classdef act
             end
         end
         
-        function est_posterior_w = posterior_MH(obj,data)
-            numIter = 2000;
-            
-            w_prev = [0 0];
-            q = @(w_prev)mvnrnd(w_prev,eye(2)*10);
-            
-            est_posterior_w = nan(numIter,2);
-            
-            figure;
-            for iter = 1:numIter                
-                w_next = q(w_prev);
-                alpha = obj.p_lik(w_next,data)*obj.p_prior(w_next) / ...
-                        (obj.p_lik(w_prev,data)*obj.p_prior(w_prev));
-
-                if alpha >= 1 || binornd(1,alpha)==1
-                    w_prev = w_next;
-                end
-                
-                est_posterior_w(iter,:) = w_prev;
-                
-%                 hist(est_posterior_w); drawnow;
-            end
-            
-        end
-        
     end
-    
-    methods (Access=private)
-        function p = p_prior(obj,w)
-            p = mvnpdf(w,obj.prior_mean,obj.prior_cov);
-        end
-        
-        function l = p_lik(~,w,data)
-            stim = data.stim; %must be column vector
-            resp = data.resp; %must be column vector
-            
-            numTrials = length(stim);
-            l = nan(numTrials,1);
-            for t = 1:numTrials
-                pGO = 1./(1+exp(-(w(1) + w(2)*stim(t))));
-                l(t,1) = pGO*resp(t) + (1-pGO)*(1-resp(t));
-            end
-            l = prod(l);
-        end
-    end
-    
-    
-    
 end

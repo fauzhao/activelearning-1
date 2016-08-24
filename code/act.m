@@ -1,9 +1,9 @@
 classdef act
     properties
         dw = 0.1;
-        w_range = [-20 20];
+        w_range = [-1 1]*100;
         prior_mean = [0 0];
-        prior_cov = eye(2)*15;
+        prior_cov = eye(2)*50;
     end
     
     properties (Access=private)
@@ -81,8 +81,7 @@ classdef act
             obj.fit(d1);
         end
         
-        function fit(obj,d1) %Try this on fake data
-            %Generate fake dataset
+        function fit(obj,d1)
             figure;
             subplot(2,3,1);
             obj.plotfcn('prior',d1); 
@@ -151,7 +150,7 @@ classdef act
             %process
             warning('Only works up to about 1000 trials due to numerical instability');
             
-            true_w0 = 3;
+            true_w0 = 0;
             true_w1 = 10;
             
             f = figure;
@@ -163,7 +162,7 @@ classdef act
                         
             postEnt = []; 
             
-            methods = {'ladder','activelearning'};
+            methods = {'random','activelearning'};
             
             stim = cell(1,length(methods));
             resp = cell(1,length(methods));

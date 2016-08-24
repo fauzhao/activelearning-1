@@ -7,7 +7,8 @@ There are several ways to deal with this problem.
 
 \subsection{Restricting the tested stimuli} % (fold)
 \label{sub:restricting_the_tested_stimuli}
-We need to discretize the $x$ anyways. We choose values.
+We need to discretize the $x$ anyways. We choose values \dots.
+% subsection restricting_the_tested_stimuli (end)
 
 \subsection{Approximating the posterior} % (fold)
  \label{sub:approximating_the_posterior}
@@ -16,5 +17,11 @@ If we take samples of the posterior and approximate the integrals by smaller sum
 As a proposal distribution $Q(x;x')$ we choose a multi variate normal distribution which determines the random walk that samples from the posterior.
  % subsection approximating_the_posterior (end) 
 
-% subsection restricting_the_tested_stimuli (end)
+\subsection{Focused active learning} % (fold)
+\label{sub:focused_active_learning}
+Instead of maximizing the utility function $\utility(x)$ over can maximize it only with respect to a subset of parameters.
+We 
+In the scenario of the sigmoid we might be interested in choosing the $x$ where the entropy is $w_1$ that maximizes 
+% subsection focused_active_learning (end)
+
 % section approximations (end)

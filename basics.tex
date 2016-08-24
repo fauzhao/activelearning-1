@@ -3,7 +3,14 @@
 \section*{General introduction} % (fold)
 \label{sec:general_introduction}
 Notation: \\
-Data $\data$. New data $\data^*$ Parameters $\params$. Input $\inp$. Output $\outp$. Model $\model$. \\
+Data $\data$. New data $\data^*$. Parameters $\params$. Input $\inp$. Output $\outp$. Model $\model$. \\
+\note{We might not mention the $\model$ explicitly in all the probabilities}.
+
+We are interested in the posterior probability of the model paramters given the data
+\begin{align}\label{eq:posterior}
+	\prob{\params | \data, \model} = \frac{\prob{\data | \params, \model} \prior{\params, \model}}{\prob{\data, \model}}
+\end{align}
+The goal is to have little uncertainty in the posterior. 
 
 The \emph{predictive distribution} is the probability $\prob{\data^* | \data, \model}$ of observing a new data point $\data^*$ given the old data $\data$ and a model $\model$.
 \begin{align*}

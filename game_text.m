@@ -19,9 +19,28 @@ switch epoch
         text(begin_text(1),begin_text(2),message,...
             'Color','white','FontSize',font_size)
         
-        text(button_text(1),button_text(2),['Press any key to start with some easy ' ...
-            'example trials to practice before we begin.'],'Color','white','FontSize',font_size)
+        text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
         waitforbuttonpress;
+        
+        figure(h);
+        imagesc( full_im, [-1 1]);
+        hold on
+        plot(imSize,imSize/2,'og','MarkerFaceColor','g','MarkerSize',20)
+        message = sprintf('Please wait until the green dot (as shown below) appears before you respond.');
+        text(begin_text(1),begin_text(2),message,...
+            'Color','white','FontSize',font_size)
+        
+        text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
+        waitforbuttonpress;
+        
+        figure(h);
+        hold off
+        imagesc( full_im, [-1 1]);
+        drawnow
+        
+%         text(button_text(1),button_text(2),['Press any key to start with some easy ' ...
+%             'example trials to practice before we begin.'],'Color','white','FontSize',font_size)
+%         waitforbuttonpress;
     case 'practice error'
         
         message = sprintf('Uh oh... Lets have another practice run. Remember to push the arrow for the side with greater contrast');

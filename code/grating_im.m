@@ -1,23 +1,29 @@
-sensor = 'bayes';
+sensor = 'human';
 global keypress
 game_over = 0;
-troubleshooting = 1;
+troubleshooting = 0;
 intro = 1;
-a=act;
+% a = act;
+a = actApprox;
 imSize = 1200;
-num_trials = 100;
+num_trials = 50;
 font_size = 20;
 begin_text = [imSize/3 imSize/4];
 button_text = [2*imSize/3 3*imSize/4];
 
 contrast = nan(num_trials,1);
+contrast_human = nan(num_trials,1);
+contrast_bayes = nan(num_trials,1);
 right_arrow_push = nan(num_trials,1);
 arrow_key_error = nan(num_trials,1);
 reaction_time = nan(num_trials,1);
 
 h = figure('units','normalized','outerposition',[0 0 1 1]);
 side = figure;
-
+t = title(['trial number : ' num2str(1)]);
+yl = ylabel('right choices');
+xl = xlabel('contrast difference (right - left)');
+set(gca,'xtick',[],'ytick',[])
 prompt = {'Enter your name:'};
 dlg_title = 'Input';
 num_lines = 1;
@@ -59,36 +65,36 @@ while game_over==0;
             figure(h);
             imagesc(full_im, [-1 1]);
             
-            if pass==1
-                message = sprintf(['Yay! Good job. Now lets get started for real.']);
-                text(begin_text(1),begin_text(2),message,...
-                    'Color','white','FontSize',font_size)
-                
-                text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
-                waitforbuttonpress;
-                full_im = zeros(imSize,2*imSize);
-                full_im = add_plus(full_im);
-                figure(h);
-                imagesc(full_im, [-1 1]);
-                drawnow
-                
-            else
-                game_text('practice error',full_im,h)
-                
-                pass = practice_run(h); %give 5 more easy trials
-                
-                full_im = zeros(imSize,2*imSize);
-                full_im = add_plus(full_im);
-                figure(h);
-                imagesc(full_im, [-1 1]);
-                
-                message = sprintf('alright...good enough. lets get started');
-                text(begin_text(1),begin_text(2),message,...
-                    'Color','white','FontSize',font_size)
-                
-                text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
-                waitforbuttonpress;
-            end
+%             if pass==1
+%                 message = sprintf(['Yay! Good job. Now lets get started for real.']);
+%                 text(begin_text(1),begin_text(2),message,...
+%                     'Color','white','FontSize',font_size)
+%                 
+%                 text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
+%                 waitforbuttonpress;
+%                 full_im = zeros(imSize,2*imSize);
+%                 full_im = add_plus(full_im);
+%                 figure(h);
+%                 imagesc(full_im, [-1 1]);
+%                 drawnow
+%                 
+%             else
+%                 game_text('practice error',full_im,h)
+%                 
+%                 pass = practice_run(h); %give 5 more easy trials
+%                 
+%                 full_im = zeros(imSize,2*imSize);
+%                 full_im = add_plus(full_im);
+%                 figure(h);
+%                 imagesc(full_im, [-1 1]);
+%                 
+%                 message = sprintf('alright...good enough. lets get started');
+%                 text(begin_text(1),begin_text(2),message,...
+%                     'Color','white','FontSize',font_size)
+%                 
+%                 text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
+%                 waitforbuttonpress;
+%             end
             intro = 0;
         end
         figure(h);
@@ -105,23 +111,30 @@ while game_over==0;
             case 'human'
                 d1.stim=contrast(1:trial-1);
                 d1.resp=right_arrow_push(1:trial-1);
-                post=a.posterior(d1);
-                [~, i] = max(post(:));
-                [row,col]=ind2sub([size(post,1) size(post,2)],i);
-                w_set = a.w_range(1):a.dw:a.w_range(2);
-                w0 = w_set(row);
-                w1 = w_set(col);
                 
-                x_set2 = -3:.05:3;
-                pd = 1./(1+exp(-(w0 + w1*x_set2)));
+%                 post=a.posterior(d1);
+%                 [~, i] = max(post(:));
+%                 [row,col]=ind2sub([size(post,1) size(post,2)],i);
+%                 w_set = a.w_range(1):a.dw:a.w_range(2);
+%                 w0 = w_set(row);
+%                 w1 = w_set(col);
+%                 
+%                 x_set2 = -3:.05:3;
+%                 pd = 1./(1+exp(-(w0 + w1*x_set2)));
+%                 
                 figure(side);
-                hold off
-                plot(x_set2,pd)
-                hold on
-                plot(d1.stim,d1.resp,'ok')
-                set(gca,'xtick',[])
+                a.plotPsych(d1);
+%                 hold off
+%                 %                 a.plotPsych(d1);
+%                 plot(x_set2,pd)
+%                 hold on
+%                 plot(d1.stim,d1.resp,'ok')
                 ylim([-.1 1.1])
-                
+                xlim([-.7 .7])
+                yl.String = 'right choices';
+                xl.String = 'contrast difference (right - left)';
+                t.String = ['trial number : ' num2str(trial)];
+                set(gca,'xtick',[])
                 [xn1,~] = ginput(1);
                 contrast(trial) = xn1;
             case 'random'
@@ -150,7 +163,7 @@ while game_over==0;
             full_im = add_plus(full_im);
             imagesc( full_im, [-1 1]);
             hold on
-            plot(imSize,imSize/2,'og','MarkerFaceColor','g','MarkerSize',10)
+            plot(imSize,imSize/2,'og','MarkerFaceColor','g','MarkerSize',20)
             drawnow
             tic;
             
@@ -161,36 +174,36 @@ while game_over==0;
                 arrow_key_error(trial) = 0;
                 if strcmp('rightarrow',keypress)
                     right_arrow_push(trial) = 1;
-            full_im = zeros(imSize,2*imSize);
-            full_im = add_plus(full_im);
-            imagesc( full_im, [-1 1]);
+                    full_im = zeros(imSize,2*imSize);
+                    full_im = add_plus(full_im);
+                    imagesc( full_im, [-1 1]);
                     drawnow
                 else
                     right_arrow_push(trial) = 0;
                     hold on
-            full_im = zeros(imSize,2*imSize);
-            full_im = add_plus(full_im);
-            imagesc( full_im, [-1 1]);
+                    full_im = zeros(imSize,2*imSize);
+                    full_im = add_plus(full_im);
+                    imagesc( full_im, [-1 1]);
                     drawnow
                 end
             else
                 arrow_key_error(trial) = 1;
                 abort = 1;
-            trial = trial-1;
-            hold on
-            plot(imSize,imSize/2,'or','MarkerFaceColor','r','MarkerSize',10)
-            drawnow
-            pause(.5)
-            text(begin_text(1),begin_text(2),['Please use arrow keys :('],...
-                'Color','red','FontSize',2*font_size)
-            text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
-            waitforbuttonpress;
-            
-            full_im = zeros(imSize,2*imSize);
-            full_im = add_plus(full_im);
-            imagesc( full_im, [-1 1]);
-            drawnow
-            
+                trial = trial-1;
+                hold on
+                plot(imSize,imSize/2,'or','MarkerFaceColor','r','MarkerSize',20)
+                drawnow
+                pause(.5)
+                text(begin_text(1),begin_text(2),['Please use arrow keys :('],...
+                    'Color','red','FontSize',2*font_size)
+                text(button_text(1),button_text(2),'Press any key to continue.','Color','white','FontSize',font_size)
+                waitforbuttonpress;
+                
+                full_im = zeros(imSize,2*imSize);
+                full_im = add_plus(full_im);
+                imagesc( full_im, [-1 1]);
+                drawnow
+                
             end
             
             if troubleshooting==1
@@ -198,7 +211,8 @@ while game_over==0;
                 d1.resp=right_arrow_push(1:trial-1);
                 post=a.posterior(d1);
                 x_set = -.7:.05:.7;
-                diffE = a.diffentropy(x_set,d1);
+                %                 diffE = a.diffentropy(x_set,d1);
+                diffE = a.diffent_approx(x_set,d1);
                 
                 [~, i] = max(post(:));
                 [row,col]=ind2sub([size(post,1) size(post,2)],i);
@@ -220,7 +234,7 @@ while game_over==0;
         elseif abort==1
             trial = trial-1;
             hold on
-            plot(imSize,imSize/2,'or','MarkerFaceColor','r','MarkerSize',10)
+            plot(imSize,imSize/2,'or','MarkerFaceColor','r','MarkerSize',20)
             drawnow
             pause(.5)
             text(begin_text(1),begin_text(2),['Wait for stimulus to disappear before response :('],...
@@ -234,10 +248,10 @@ while game_over==0;
             drawnow
         end
         
-            if abort==0
+        if abort==0
             save(fullfile(full_file_dir{1},['data_temp' num2str(numf+1)]),...
                 'contrast','right_arrow_push','arrow_key_error','reaction_time')
-            end
+        end
     else
         
         full_im = zeros(imSize,2*imSize);

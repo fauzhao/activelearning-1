@@ -19,6 +19,9 @@ for t = 0:num_trials-1
     trial = t+1;
     full_im = generate_stim(contrast(:,trial));
     imagesc( full_im, [-1 1]);
+            hold on
+            plot(imSize,imSize/2,'og','MarkerFaceColor','g','MarkerSize',20)
+            drawnow
     
     global keypress
     set(h,'KeyPressFcn',@getkeypress)

@@ -1,6 +1,6 @@
 classdef actApprox
     properties
-        metHastIter=5000;
+        metHastIter=3000;
     end
     
     properties (Access=private)
@@ -84,13 +84,16 @@ classdef actApprox
         function plotPsych(obj,data)
             post = obj.posterior(data);
             cvals = -5:0.05:5;
-            [p,ci]=obj.predict_ci(cvals,post);
-%             p=obj.predict(cvals,post);
+%             [p,ci]=obj.predict_ci(cvals,post);
+            p=obj.predict(cvals,post);
 
-            figure; axes; hold on;
-            fill([cvals'; flipud(cvals')],[ci(:,1); flipud(ci(:,2))],[1 1 1]*0.95)
+%             figure; 
+            axes; hold on;
+%             fill([cvals'; flipud(cvals')],[ci(:,1); flipud(ci(:,2))],[1 1 1]*0.95)
             plot(cvals,p); ylim([0 1]);
-            plot(data.stim,data.resp,'ko');
+            plot(data.stim,data.resp,'ko'); hold off;
+            
+            set(gca,'xtick','','ytick',[0 1]);
         end
         
         function ent = diffent_approx(obj,xn1_list,data)

@@ -62,7 +62,8 @@ classdef actApprox
         function py = predict(~,newX,post)
             py=nan(length(newX),1);
             for xn = 1:length(newX)
-                phat = 1./(1 + exp(-(post(:,1) + post(:,2)*newX(xn))));
+                w = mean(post,1);
+                phat = 1./(1 + exp(-(w(1) + w(2)*newX(xn))));
                 py(xn) = nanmean(phat);
             end
         end
@@ -71,17 +72,21 @@ classdef actApprox
             py=nan(length(newX),1);
             ci=nan(length(newX),2);
             for xn = 1:length(newX)
+                w = mean(post,1);
+                phat = 1./(1 + exp(-(w(1) + w(2)*newX(xn))));
+                py(xn) = phat;
+                
                 phat = 1./(1 + exp(-(post(:,1) + post(:,2)*newX(xn))));
-                py(xn) = nanmean(phat);
                 ci(xn,:) = quantile(phat,[0.025 0.975]);
             end
         end
         
         function plotPsych(obj,data)
             post = obj.posterior(data);
-            cvals = -1:0.05:1;
+            cvals = -5:0.05:5;
             [p,ci]=obj.predict_ci(cvals,post);
-            
+%             p=obj.predict(cvals,post);
+
             figure; axes; hold on;
             fill([cvals'; flipud(cvals')],[ci(:,1); flipud(ci(:,2))],[1 1 1]*0.95)
             plot(cvals,p); ylim([0 1]);

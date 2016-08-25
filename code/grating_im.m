@@ -1,10 +1,10 @@
-sensor = 'bayes'; %human bayes random
-subject = 'human'; %human computer
+sensor = 'human'; %human bayes random
+subject = 'computer'; %human computer
 
 a = actApprox;
 troubleshooting = 0;
 imSize = 1200;
-num_trials = 100;
+num_trials = 50;
 font_size = 20;
 begin_text = [imSize/3 imSize/4];
 button_text = [2*imSize/3 3*imSize/4];
@@ -41,7 +41,7 @@ dlg_title = 'Input';
 num_lines = 1;
 nom = inputdlg(prompt,dlg_title,num_lines,{[subject '_' sensor '_']});
 
-base_file_dir = '/Users/peter/Desktop/activelearning/data';
+base_file_dir = pwd;
 full_file_dir = fullfile(base_file_dir,nom);
 if ~exist(full_file_dir{1},'dir')
     mkdir(full_file_dir{1})

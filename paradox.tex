@@ -1,2 +1,18 @@
 % !TEX root = ./active_learning.tex
+\section{Paradox of ladder stimulus presentation} % (fold)
+\label{sec:paradox_of_ladder_stimulus_presentation}
 
+Assume a stimulus range from $-a$ to $a$. Imagine we present stimuli in the following way:
+\begin{itemize}
+	\item We present the first at the center $(x_1=0)$ and record the answer $y_1$
+	\item For the $n$-th stimulus ($n>1$) we take
+	\begin{align}
+		x_n = x_{n-1} + (-1)^{y_{n-1}} \frac{a}{2^{n-1}}
+	\end{align}
+\end{itemize}
+This leads to a distribution of data points that seems to be best fitted by a step function. When we collect data this way, we know that it will always lead to a distribution that looks this way and we know that we should not conclude that the underlying psychometric function should have steep step. If, however, someone would present us this data and claim that it was obtained without using the ladder algorithm above, we might be tempted to conclude that the underlying psychometric curve is very steep. This is paradoxical, because the likelihood principle claims that the data is all we need to determine our parameter. It should not matter how the data was obtained.
+
+The solution is, that the we should not conclude a step function in neither of the two cases. Instead the posterior suggests that all sigmoids that cross $y=1/2$ at the stimulus value to which the ladder method converges $\xconv$.
+With our parameterization this is the set of sigmoids for which $w_0/w_1 = - \xconv$.
+
+% section paradox_of_ladder_stimulus_presentation (end)

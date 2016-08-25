@@ -1,10 +1,10 @@
-sensor = 'human'; %human bayes random
-subject = 'computer'; %human computer
+sensor = 'bayes'; %human bayes random
+subject = 'human'; %human computer
 
 a = actApprox;
 troubleshooting = 0;
 imSize = 1200;
-num_trials = 5;
+num_trials = 100;
 font_size = 20;
 begin_text = [imSize/3 imSize/4];
 button_text = [2*imSize/3 3*imSize/4];

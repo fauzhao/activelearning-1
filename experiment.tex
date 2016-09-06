@@ -61,7 +61,7 @@ Here $\prob{y = 0/1 | \data, x}$ is called the \emph{predictive distribution}. D
 Instead we should use BALD learning and find the $x$ that maximizes:
 \begin{align}
 	\utility(x) = H[\prob{y | \data, x}]
-	- \expect{\params | \data} H[\prob{y | \params, x}] \,.
+	- \expect{\params}{\params | \data} H[\prob{y | \params, x}] \,.
 \end{align}
 
 \subsection{Humans} % (fold)

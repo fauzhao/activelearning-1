@@ -10,9 +10,16 @@ Assume a stimulus range from $-a$ to $a$. Imagine we present stimuli in the foll
 		x_n = x_{n-1} + (-1)^{y_{n-1}} \frac{a}{2^{n-1}}
 	\end{align}
 \end{itemize}
-This leads to a distribution of data points that seems to be best fitted by a step function. When we collect data this way, we know that it will always lead to a distribution that looks this way and we know that we should not conclude that the underlying psychometric function should have steep step. If, however, someone would present us this data and claim that it was obtained without using the ladder algorithm above, we might be tempted to conclude that the underlying psychometric curve is very steep. This is paradoxical, because the likelihood principle claims that the data is all we need to determine our parameter. It should not matter how the data was obtained.
+For $N \to \infty$, this leads to a distribution of data points that seems to be best fitted by a step function.
+When we collect data this way, we know that it will always lead to a distribution that looks this way and we know that we should not conclude that the underlying psychometric function should have a steep step.
+If, however, someone would present us this data and claim that it was obtained without using the ladder algorithm above, we might be tempted to conclude that the underlying psychometric curve is very steep. This is paradoxical, because the likelihood principle claims that the data is all we need to determine our parameter. It should not matter how the data was obtained.
 
-The solution is, that the we should not conclude a step function in neither of the two cases. Instead the posterior suggests that all sigmoids that cross $y=1/2$ at the stimulus value to which the ladder method converges $\xconv$.
-With our parameterization this is the set of sigmoids for which $w_0/w_1 = - \xconv$.
-
+The solution of this paradox is that we should not conclude a step function in neither of the two cases. Instead the posterior suggests that all sigmoids that cross $y^* = \frac{\#\text{ of response 1 around } \xconv}{\#\text{ of response 0 around } \xconv}$ at the stimulus value $\xconv$ to which the ladder method converges are equally probable. \note{'around' is not properly defined here, but it can't be $\xconv$ precisely, because it is never reached. It should be some $\varepsilon$-ball.}
+With our parameterization this is the set of sigmoids for which
+\begin{align}\label{eq:paradox}
+ w_0 = -\xconv w_1 + c \,,	
+\end{align}
+where $c > 0$ if $y^* > 1/2$, $c = 0$ if $y^* = 1/2$ and $c < 0$ if $y^* < 1/2$.
+So for $N \to \infty$ the posterior $\prob{w_0, w_1 | \data}$ turns into a line that is characterized by \cref{eq:paradox}. \\
+Marginalizing over the threshold value $w_0$ leads to a flat posterior for the slope $\prob{w_1 | \data}$. This shows that all slopes are equally likely and Bayesian inference does not conclude a step function.
 % section paradox_of_ladder_stimulus_presentation (end)

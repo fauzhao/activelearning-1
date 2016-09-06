@@ -6,11 +6,37 @@ Notation: \\
 Data $\data$. New data $\data^*$. Parameters $\params$. Input $\inp$. Output $\outp$. Model $\model$. \\
 \note{We might not mention the $\model$ explicitly in all the probabilities}.
 
-We are interested in the posterior probability of the model paramters given the data
+We are interested in the posterior probability of the model parameters given the data
 \begin{align}\label{eq:posterior}
 	\prob{\params | \data, \model} = \frac{\prob{\data | \params, \model} \prior{\params, \model}}{\prob{\data, \model}}
 \end{align}
-The goal is to have little uncertainty in the posterior. 
+The posterior reflects the parameters for which the model best describes the data and the underlying uncertainty. It is typically desirable to have little uncertainty in the posterior. The amount of uncertainty can be measure by the entropy
+\begin{align}
+	H[\prob{\params | \data}] =
+	- \expect{\params | \data} \log\prob{\params | \data}
+\end{align}
+In the psychophysics experiment that we conduct, the data is comprised of stimulus-response pairs. We can choose the stimulus $\inp$ and observe the response $\outp$. Say we have collected some stimulus-response pairs already (represented with $\data$). The goal is to choose the next stimulus $\inp$ such that the uncertainty in the posterior is decreased. In other words, we would like to choose $\inp$ such that the corresponding decrease in entropy
+\begin{align}
+	H[p(\params | \data)] - H[p(\params | \data, \inp, \outp)]
+\end{align}
+is maximal. But we don't know the answer $\outp$ that we are going to get. We can only maximize the decrease in expected posterior entropy:
+\begin{align}
+	\utility(\inp)
+	= H[p(\params | \data)]
+	- \expect{\outp | \inp, \data} H[\prob{\params | \data, \inp, \outp}] \,,
+\end{align}
+which corresponds to minimizing the second term. This is called posterior entropy minimization.
+We can get an alternative formulation by noting that
+\begin{align}
+	\utility(\inp)
+	&= I[\params, \outp | \data, \inp] \\
+	&= H[\prob{\outp | \inp, \data}]
+	- \expect{\params | \data} H[\prob{\outp | \inp, \params}] \,,
+\end{align}
+where $I$ is the mutual information, which is symmetric in its arguments. Writing it this way allows for a different interpretation of the utility function $\utility(\inp)$
+Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input $\inp$ for which we don't know yet what the output $\outp$ will be. Furthermore $\expect{\params | \data} H[\prob{\inp | \outp, \params}]$ should be small, because we don't want to choose an input $\inp$ for which the output $\outp$ is very uncertain.
+\note{Copied from Houlsby thesis:}
+In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions (term 2), but these predictions are highly diverse. That is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
 
 The \emph{predictive distribution} is the probability $\prob{\data^* | \data, \model}$ of observing a new data point $\data^*$ given the old data $\data$ and a model $\model$.
 \begin{align*}
@@ -25,23 +51,4 @@ The \emph{predictive distribution} is the probability $\prob{\data^* | \data, \m
 		\prob{\params | \data, \model} \,,
 \end{align*}
 where in the last step we used $\prob{\data^* | \data, \model, \params} = \prob{\data^* | \model, \params}$, because the new data should depend only on the model and the parameters and not on the collected data. That is, we assume that the model captures all the structure in the data. This assumption is typical for Bayesian inference.
-
-We want to maximize the expected information gain of the input $\inp$:
-\begin{align}
-	\utility(\inp)
-	= H[p(\params | \data)]
-	- \expect{\outp | \inp, \data} H[\prob{\params | \data, \inp, \outp}] \,,
-\end{align}
-which corresponds to minimizing the second term. This is called posterior entropy minimization.
-We can get an alternative formulation by noting that
-\begin{align}
-	\utility(\inp)
-	&= I[\params, \outp | \data, \inp] \\
-	&= H[\prob{\outp | \inp, \data}]
-	- \expect{\params | \data} H[\prob{\outp | \inp, \params}] \,,
-\end{align}
-where $I$ is the mutual information, which is symmetric in its arguments. Writing it this way allows for a different interpretation of $\utility(\inp)$
-Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input $\inp$ for which we don't know yet what the output $\outp$ will be. Furthermore $\expect{\params | \data} H[\prob{\inp | \outp, \params}]$ should be small, because we don't want to choose an input $\inp$ for which the output $\outp$ is very uncertain.
-\note{Copied from Houlsby thesis:}
-In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions (term 2), but these predictions are highly diverse. That is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
 % subsection general_introduction (end)

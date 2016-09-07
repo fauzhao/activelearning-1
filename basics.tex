@@ -48,7 +48,21 @@ It is typically desirable to have little uncertainty in the posterior. The amoun
 	- \expect{\params}{\params | \data}
 	\log \prob{\params | \data}
 \end{align}
-In the psychophysics experiment that we conduct, the data is comprised of stimulus-response pairs. We can choose the stimulus $\inp$ and observe the response $\outp$. Say we have collected some stimulus-response pairs already (represented with $\data$). The goal is to choose the next stimulus $\inp$ such that the uncertainty in the posterior is decreased. In other words, we would like to choose $\inp$ such that the corresponding decrease in entropy
+
+\begin{figure}
+\centering
+  \begin{tikzpicture}[auto, bend angle=10, ->, >=stealth', initial text=]
+	\node[state]	(t) at (1, 2)  {$ \params $};
+	\node[state, fill = black!10]	(x) at (0, 0)  {$ x_i $};
+	\node[state, fill = black!10]	(y) at (2, 0) [label=below:{$i=1,\dots,N$}] {$ y_i $};
+	\path (t) edge         node {} (y);
+	\path (x) edge         node {} (y);
+	\node[rectangle, draw=black!100, inner sep=7mm, fit= (x) (y)] {};	
+  \end{tikzpicture}
+  \caption{Graphical model. White nodes indicate latent (unobserved) variables and shaded nodes denote observed variables. The stimulus $x$ is independent of the parameters $\params$. Adapted from Houlsby thesis.}\label{fig:graphical_model}
+\end{figure}
+
+In the psychophysics experiment that we conduct, the data is comprised of stimulus-response pairs. We can choose the stimulus $\inp$ and observe the response $\outp$; see \cref{fig:graphical_model} for the graphical model. Say we have collected some stimulus-response pairs already (represented with $\data$). The goal is to choose the next stimulus $\inp$ such that the uncertainty in the posterior is decreased. In other words, we would like to choose $\inp$ such that the corresponding decrease in entropy
 \begin{align}
 	H[p(\params | \data)] - H[p(\params | \data, \inp, \outp)]
 \end{align}
@@ -63,7 +77,7 @@ We can get an alternative formulation by noting that
 \begin{align}
 	\utility(\inp)
 	&= I[\params, \outp | \data, \inp] \\
-	&=
+	&={}
 	\underbrace{
 	H[\prob{\outp | \inp, \data}]}_{\text{marginal entropy}}
 	-
@@ -87,20 +101,12 @@ The second term (the expected conditional entropy) is:
 \end{align} 
 This term reflects the inherent uncertainty because it is high if all $\outp$ are equally probable for the given parameter $\params'$. The term should be small. This makes sense, because if the prediction of the output $\outp$ given by the model parameters $\params'$ is very uncertain at the input $\inp$, we learn very little about the choice of the parameters after we observed the response. We thus should choose an $\inp$ for which the parameter sets $\params'$ typically make a confident prediction of the response.
 Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input.
-
 \note{Copied from Houlsby thesis: In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions [term 2], but these predictions are highly diverse [term 1]. That [term 1] is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
 }
+The different width of the expected conditional entropy and the marginal entropy as a function of the stimulus explain the typically Mexican hat like shape of the utility function $\utility(\inp)$ in our experiments; see \cref{fig:utility_function}.
 
 \begin{figure}
-\centering
-  \begin{tikzpicture}[auto, bend angle=10, ->, >=stealth', initial text=]
-	\node[state]	(t) at (1, 2)  {$ \params $};
-	\node[state, fill = black!10]	(x) at (0, 0)  {$ x_i $};
-	\node[state, fill = black!10]	(y) at (2, 0) [label=below:{$i=1,\dots,N$}] {$ y_i $};
-	\path (t) edge         node {} (y);
-	\path (x) edge         node {} (y);
-	\node[rectangle, draw=black!100, inner sep=7mm, fit= (x) (y)] {};	
-  \end{tikzpicture}
-  \caption{Graphical model. White notes indicate latent (unobserved) variables and shaded notes denote observed variables. The stimulus $x$ is independent of the parameters $\params$. Adapted from Houlsby thesis.}
+	\centering
+	\caption{MISSING}\label{fig:utility_function}
 \end{figure}
 % subsection general_introduction (end)

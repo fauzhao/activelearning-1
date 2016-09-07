@@ -2,15 +2,47 @@
 
 \section*{General introduction} % (fold)
 \label{sec:general_introduction}
+
+\subsection{Uncertainties in determining model parameters from data} % (fold)
+\label{sub:uncertainties_in_determining_model_parameters_from_data}
+\begin{itemize}
+	\item \textbf{Parameter uncertainty:}
+	Observed data sets are finite. Therefore it is impossible to determine the parameters of a model precisely. \\
+	In our example we can't be confident about the psychometric curve if we have few data points.
+	\item \textbf{Inherent uncertainty:}
+	Typically there is noise in observing the data. In other words, there is randomness in the data that is not explained by the model.
+	Inherent uncertainty is also called \textbf{observation noise}. \\
+	In our example the inherent uncertainty is high at low contrast differences.
+\end{itemize}
+% subsection uncertainties_in_determining_model_parameters_from_data (end)
+
 Notation: \\
 Data $\data$. New data $\data^*$. Parameters $\params$. Input $\inp$. Output $\outp$. Model $\model$. \\
 \note{We might not mention the $\model$ explicitly in all the probabilities}.
 
 We are interested in the posterior probability of the model parameters given the data
 \begin{align}\label{eq:posterior}
-	\prob{\params | \data, \model} = \frac{\prob{\data | \params, \model} \prior{\params, \model}}{\prob{\data, \model}}
+	\prob{\params | \data, \model} = \frac{\prob{\data | \params, \model} \prior{\params | \model}}{\prob{\data | \model}}
 \end{align}
-The posterior reflects the parameters for which the model best describes the data and the underlying uncertainty. It is typically desirable to have little uncertainty in the posterior. The amount of uncertainty can be measured by the entropy
+The posterior reflects the parameters for which the model best describes the data and the underlying uncertainty (parameter uncertainty).
+Another probability that occurs frequently in the following is the \emph{predictive distribution}.
+The predictive distribution is the probability $\prob{\data^* | \data, \model}$ of observing a new data point $\data^*$ given the old data $\data$ and a model $\model$.
+\begin{align}
+	\prob{\data^* | \data, \model}
+	&= \int \ud \params
+		\prob{\data^*, \params | \data, \model} \\
+	&= \int \ud \params
+		\prob{\data^* | \data, \params, \model}
+		\prob{\params | \data, \model} \\
+	&= \int \ud \params
+		\underbrace{
+		\prob{\data^* | \params, \model}}_{\text{inherent uncertainty}}
+		\underbrace{
+		\prob{\params | \data, \model}}_{\text{parameter uncertainty}} \,, \label{eq:predictive_distribution}
+\end{align}
+where in the last step we used $\prob{\data^* | \data, \model, \params} = \prob{\data^* | \model, \params}$, because the new data should depend only on the model and the parameters and not on the collected data. That is, we assume that the model captures all the structure in the data. This assumption is typical for Bayesian inference. Note how \cref{eq:predictive_distribution} contains both aforementioned uncertainties. 
+
+It is typically desirable to have little uncertainty in the posterior. The amount of uncertainty can be measured by the entropy
 \begin{align}
 	H[\prob{\params | \data}] =
 	- \expect{\params}{\params | \data}
@@ -31,26 +63,44 @@ We can get an alternative formulation by noting that
 \begin{align}
 	\utility(\inp)
 	&= I[\params, \outp | \data, \inp] \\
-	&= H[\prob{\outp | \inp, \data}]
-	- \expect{\params}{\params | \data} H[\prob{\outp | \inp, \params}] \,,
+	&=
+	\underbrace{
+	H[\prob{\outp | \inp, \data}]}_{\text{marginal entropy}}
+	-
+	\underbrace{
+	\expect{\params}{\params | \data} H[\prob{\outp | \inp, \params}]}_{\text{expected conditional entropy}}
+	\,,
 \end{align}
 where $I$ is the mutual information, which is symmetric in its arguments. Writing it this way allows for a different interpretation of the utility function $\utility(\inp)$.
-Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input $\inp$ for which we don't know yet what the output $\outp$ will be.
-Furthermore $\expect{\params}{\params | \data} H[\prob{\outp | \inp, \params}]$ should be small, because we don't want to choose an input $\inp$ for which the output $\outp$ is very uncertain.
-\note{Copied from Houlsby thesis:}
-In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions (term 2), but these predictions are highly diverse. That is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
+The first term (the marginal entropy) is the entropy of the predictive distribution:
+\begin{align}
+	\entropy{\prob{\outp | \inp, \data}} = \entropy{\int \ud \params' \prob{\outp | \inp, \params'} \prob{\params' | \data}} \,.
+\end{align}
+This term reflects the parameter uncertainty.
+It should be large, because we want to choose an input $\inp$ for which the parameters $\params'$ disagree about the output $\outp$. If they would all agree, we would not get useful information about which parameters are better than others.
+More precisely, if for different $\params'$ different $\outp$ are likely, than the integral results in a non-vanishing probability for many values of $\outp$. We thus get a high entropy.
 
-The \emph{predictive distribution} is the probability $\prob{\data^* | \data, \model}$ of observing a new data point $\data^*$ given the old data $\data$ and a model $\model$.
-\begin{align*}
-	\prob{\data^* | \data, \model}
-	&= \int \ud \params
-		\prob{\data^*, \params | \data, \model} \\
-	&= \int \ud \params
-		\prob{\data^* | \data, \model, \params}
-		\prob{\params | \data, \model} \\
-	&= \int \ud \params
-		\prob{\data^* | \model, \params}
-		\prob{\params | \data, \model} \,,
-\end{align*}
-where in the last step we used $\prob{\data^* | \data, \model, \params} = \prob{\data^* | \model, \params}$, because the new data should depend only on the model and the parameters and not on the collected data. That is, we assume that the model captures all the structure in the data. This assumption is typical for Bayesian inference.
+The second term (the expected conditional entropy) is:
+\begin{align}
+	\expect{\params}{\params | \data} H[\prob{\outp | \inp, \params}]
+	= \int \ud \params' \prob{\params'|\data} \entropy{\prob{\outp | \inp, \params'}} \,.
+\end{align} 
+This term reflects the inherent uncertainty because it is high if all $\outp$ are equally probable for the given parameter $\params'$. The term should be small. This makes sense, because if the prediction of the output $\outp$ given by the model parameters $\params'$ is very uncertain at the input $\inp$, we learn very little about the choice of the parameters after we observed the response. We thus should choose an $\inp$ for which the parameter sets $\params'$ typically make a confident prediction of the response.
+Now $H[\prob{\outp | \inp, \data}]$ should be large, which makes sense, because we should choose an input.
+
+\note{Copied from Houlsby thesis: In other words, we seek the input $\inp$ for which the parameters under the posterior make confident predictions [term 2], but these predictions are highly diverse [term 1]. That [term 1] is, the parameters disagree about the output $\outp$, hence this formulation is named Bayesian Active Learning by Disagreement (BALD).
+}
+
+\begin{figure}
+\centering
+  \begin{tikzpicture}[auto, bend angle=10, ->, >=stealth', initial text=]
+	\node[state]	(t) at (1, 2)  {$ \params $};
+	\node[state, fill = black!10]	(x) at (0, 0)  {$ x_i $};
+	\node[state, fill = black!10]	(y) at (2, 0) [label=below:{$i=1,\dots,N$}] {$ y_i $};
+	\path (t) edge         node {} (y);
+	\path (x) edge         node {} (y);
+	\node[rectangle, draw=black!100, inner sep=7mm, fit= (x) (y)] {};	
+  \end{tikzpicture}
+  \caption{Graphical model. White notes indicate latent (unobserved) variables and shaded notes denote observed variables. The stimulus $x$ is independent of the parameters $\params$. Adapted from Houlsby thesis.}
+\end{figure}
 % subsection general_introduction (end)

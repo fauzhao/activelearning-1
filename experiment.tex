@@ -6,7 +6,7 @@
 We show two gratings to participants. The frequency of the grating is fixed. The orientation of both gratings is the same but varied in each trial to avoid afterimages. One grating is always of the same contrast level, but the side is chosen at random. We vary the contrast of the other grating.
 We characterize the difference in contrast between the grating that is shown on the left and the grating that is shown on the right with $x$. For negative $x$ the grating on the left is of higher contrast, for positive $x$ the stimulus on the right is of higher contrast. If we denote the fixed baseline contrast with $x_b$, then the value of $x$ is in the range $[-(1-x_b), (1-x_b)]$.
 
-We chose the presented $x$ according to different strategies and record the answers (left $L$, or right $R$) of the participants when the decide on which side the grating with higher contrast is shown.
+We chose the presented $x$ according to different strategies and record the answers (left $L$, or right $R$) of the participants when they decide on which side the grating with higher contrast is shown.
 
 \subsection{Choosing the presented stimulus} % (fold)
 \label{sub:choosing_the_presented_stimulus}
@@ -15,7 +15,7 @@ As the model $\model$ we use a sigmoid function
 \begin{align}
 	\sigmoid{\params, x} = \lambda / 2 + \frac{1-\lambda / 2}{1 + \exp[-w_1(x - w_0)]} \,,
 \end{align}
-where $\lambda$ is the lapse rate. The lapse rate accounts for wrong answers that are not because the task was to difficult, but because the participant hit mistakenly hits the wrong button.
+where $\lambda$ is the lapse rate. The lapse rate accounts for wrong answers that are not because the task was too difficult, but because the participant hit the wrong button mistakenly.
 \note{We drop the model $\model$ in all the subsequent probabilities. Whenever we use $\params$ we mean the parameters together with the sigmoid model}.
 We collect data $N$ data points by presenting a stimulus $x \in [-1.0, 1.0]$ and observing a binary response $y \in \set{0, 1}$:
 \begin{align}
@@ -26,11 +26,11 @@ The likelihood of the parameters $\params$ given the data $D$ is given by
 \begin{align}
 	\prob{Y^N | \params, X^N}
 	&= \prod_{i=1}^N \prob{y_i | \params, x_i} \\
-	&= \prod_{i=1}^N \sigmoid{\params, x}^{y_i}
-		\left( 1 - \sigmoid{\params, x} \right)^{1-y_i}
+	&= \prod_{i=1}^N \sigmoid{\params, x_i}^{y_i}
+		\left( 1 - \sigmoid{\params, x_i} \right)^{1-y_i}
 \end{align}
 \note{The stimuli $x$ are not considered part of the data, because we have control over it}
-The posterior probability of the parameters $\vek w$ is
+The posterior probability of the parameters $\params$ is
 \begin{align}
 	\prob{\params | X, Y} = \frac{\prob{Y | \params, X} \prior{\params}}{\prob{Y | X}}
 \end{align}
@@ -38,16 +38,16 @@ The denominator, \ie the marginal likelihood, is computed by taking the integral
 \begin{align}
 	\prob{Y | X} = \int \prob{Y | \params', X} \prior{\params'} \ud \params'
 \end{align}
-The goal is to get a posterior $\prob{\vek w | X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\params$. By \emph{current} we mean that we use the data $\data$ we have discovered in the $N$ steps until now. The new data points are labeled $x, y$.
+The goal is to get a posterior $\prob{\params | X, Y}$ that is of low uncertainty. We use entropy as a measure of the current uncertainty of our estimation of $\params$. By \emph{current} we mean that we use the data $\data$ we have discovered in the $N$ steps until now. The new data points are labeled $x, y$.
 \begin{align}
 	H[\prob{\params | \data}] = - \int \prob{\params' | \data} \log[\prob{\params' | \data}] \ud \params' \,.
 \end{align}
-In principle we would now like to choose our next stimulus $x$ such that it minimizes the resulting entropy $H(\vek w | X_N, Y_N, x, y)$, but we do not know what $y$ is going to be. So we want to find the $x$ that minimizes the mean:
+In principle we would now like to choose our next stimulus $x$ such that it minimizes the resulting entropy $H(\params | X_N, Y_N, x, y)$, but we do not know what $y$ is going to be. So we want to find the $x$ that minimizes the mean:
 \begin{align}
-	H[\prob{\vek w | \data, x, y = 0}] ~
+	H[\prob{\params | \data, x, y = 0}] ~
 	\prob{y = 0 | \data, x} \\
 	&+
-	H[\prob{\vek w | \data, x, y = 1}] ~
+	H[\prob{\params | \data, x, y = 1}] ~
 	\prob{y = 1 | \data, x} \,.
 \end{align}
 Here $\prob{y = 0/1 | \data, x}$ is called the \emph{predictive distribution}. Determining them again requires an integral over the hypotheses:
